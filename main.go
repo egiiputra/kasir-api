@@ -129,6 +129,23 @@ func updateProduk(w http.ResponseWriter, r *http.Request) {
 	for i := range produk {
 		if produk[i].ID == id {
 			updateProduk.ID = id
+			// cek categoryID jika disediakan
+			if updateProduk.CategoryID != nil {
+				// cari category dengan ID tersebut
+				categoryFound := false
+				for _, cat := range categories {
+					if cat.ID == *updateProduk.CategoryID {
+						categoryFound = true
+						break
+					}
+				}
+				
+				// jika category tidak ditemukan, return error
+				if !categoryFound {
+					http.Error(w, "Category not found", http.StatusBadRequest)
+					return
+				}
+			}
 			produk[i] = updateProduk
 
 			w.Header().Set("Content-Type", "application/json")
