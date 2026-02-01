@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"kasir-api/database"
-	"kasir-api/models/handlers"
+	"kasir-api/handlers"
 	"kasir-api/repositories"
 	"kasir-api/services"
 	"log"
@@ -189,48 +189,48 @@ func deleteCategoryByID(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 
-	http.HandleFunc("/api/categories/", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "GET" {
-			getCategoryByID(w, r)
-		} else if r.Method == "PUT" {
-			updateCategoryByID(w, r)
-		} else if r.Method == "DELETE" {
-			deleteCategoryByID(w, r)
-		}
-	})
+	// http.HandleFunc("/api/categories/", func(w http.ResponseWriter, r *http.Request) {
+	// 	if r.Method == "GET" {
+	// 		getCategoryByID(w, r)
+	// 	} else if r.Method == "PUT" {
+	// 		updateCategoryByID(w, r)
+	// 	} else if r.Method == "DELETE" {
+	// 		deleteCategoryByID(w, r)
+	// 	}
+	// })
 
-	// localhost:8080/health
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{
-			"status":  "OK",
-			"message": "API Running",
-		})
-	})
+	// // localhost:8080/health
+	// http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+	// 	w.Header().Set("Content-Type", "application/json")
+	// 	json.NewEncoder(w).Encode(map[string]string{
+	// 		"status":  "OK",
+	// 		"message": "API Running",
+	// 	})
+	// })
 
-	http.HandleFunc("/api/categories", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "GET" {
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(categories)
+	// http.HandleFunc("/api/categories", func(w http.ResponseWriter, r *http.Request) {
+	// 	if r.Method == "GET" {
+	// 		w.Header().Set("Content-Type", "application/json")
+	// 		json.NewEncoder(w).Encode(categories)
 
-		} else if r.Method == "POST" {
-			// baca data dari request
-			var categoryBaru Category
-			err := json.NewDecoder(r.Body).Decode(&categoryBaru)
-			if err != nil {
-				http.Error(w, "Invalid request", http.StatusBadRequest)
-				return
-			}
+	// 	} else if r.Method == "POST" {
+	// 		// baca data dari request
+	// 		var categoryBaru Category
+	// 		err := json.NewDecoder(r.Body).Decode(&categoryBaru)
+	// 		if err != nil {
+	// 			http.Error(w, "Invalid request", http.StatusBadRequest)
+	// 			return
+	// 		}
 
-			// masukkin data ke dalam variable produk
-			categoryBaru.ID = len(categories) + 1
-			categories = append(categories, categoryBaru)
+	// 		// masukkin data ke dalam variable produk
+	// 		categoryBaru.ID = len(categories) + 1
+	// 		categories = append(categories, categoryBaru)
 
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusCreated) // 201
-			json.NewEncoder(w).Encode(categoryBaru)
-		}
-	})
+	// 		w.Header().Set("Content-Type", "application/json")
+	// 		w.WriteHeader(http.StatusCreated) // 201
+	// 		json.NewEncoder(w).Encode(categoryBaru)
+	// 	}
+	// })
 
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
@@ -255,6 +255,14 @@ func main() {
 	productRepo := repositories.NewProductRepository(db)
 	productService := services.NewProductService(productRepo)
 	productHandler := handlers.NewProductHandler(productService)
+
+	categoryRepo := repositories.NewCategoryRepository(db)
+	categoryService := services.NewCategoryService(categoryRepo)
+	categoryHandler := handlers.NewCategoryHandler(categoryService)
+
+	// Setup routes
+	http.HandleFunc("/api/categories", categoryHandler.HandleCategories)
+	http.HandleFunc("/api/categories/", categoryHandler.HandleCategoryByID)
 
 	// Setup routes
 	http.HandleFunc("/api/produk", productHandler.HandleProducts)
