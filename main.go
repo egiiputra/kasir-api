@@ -52,6 +52,13 @@ func main() {
 	http.HandleFunc("/api/produk", productHandler.HandleProducts)
 	http.HandleFunc("/api/produk/", productHandler.HandleProductByID)
 
+	// Transaction
+	transactionRepo := repositories.NewTransactionRepository(db)
+	transactionService := services.NewTransactionService(transactionRepo)
+	transactionHandler := handlers.NewTransactionHandler(transactionService)
+
+	http.HandleFunc("/api/checkout", transactionHandler.HandleCheckout) // POST
+
 	addr := "0.0.0.0:" + config.Port
 
 	fmt.Printf("Server running di %s\n", addr)
