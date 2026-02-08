@@ -14,6 +14,11 @@ import (
 	"github.com/spf13/viper"
 )
 
+type Config struct {
+	Port   string
+	DBConn string
+}
+
 func main() {
 
 	viper.AutomaticEnv()
@@ -58,6 +63,12 @@ func main() {
 	transactionHandler := handlers.NewTransactionHandler(transactionService)
 
 	http.HandleFunc("/api/checkout", transactionHandler.HandleCheckout) // POST
+
+	// Report
+	reportService := services.NewReportService(transactionRepo)
+	reportHandler := handlers.NewReportHandler(reportService)
+
+	http.HandleFunc("/api/report", reportHandler.HandleReport) // GET
 
 	addr := "0.0.0.0:" + config.Port
 

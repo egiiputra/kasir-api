@@ -1,3 +1,20 @@
+package repositories
+
+import (
+	"database/sql"
+	"fmt"
+	"kasir-api/models"
+	"time"
+)
+
+type TransactionRepository struct {
+	db *sql.DB
+}
+
+func NewTransactionRepository(db *sql.DB) *TransactionRepository {
+	return &TransactionRepository{db: db}
+}
+
 func (repo *TransactionRepository) CreateTransaction(items []models.CheckoutItem) (*models.Transaction, error) {
 	tx, err := repo.db.Begin()
 	if err != nil {
@@ -59,5 +76,44 @@ func (repo *TransactionRepository) CreateTransaction(items []models.CheckoutItem
 		ID:          transactionID,
 		TotalAmount: totalAmount,
 		Details:     details,
+	}, nil
+}
+
+func (repo *TransactionRepository) GetReport(startDate, endDate time.Time) (*models.ReportResponse, error) {
+	// Get total revenue and transaction count
+	var totalRevenue, totalTransaksi int
+	err := repo.db.QueryRow(`
+		SELECT COALESCE(SUM(total_amount), 0), COUNT(id) 
+		FROM transactions 
+		WHERE DATE(created_at) >= $1 AND DATE(created_at) <= $2
+	`, startDate, endDate).Scan(&totalRevenue, &totalTransaksi)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get best-selling product
+	var produkNama string
+	var produkQty int
+	err = repo.db.QueryRow(`
+		SELECT p.name, SUM(td.quantity) as total_qty
+		FROM transaction_details td
+		JOIN products p ON td.product_id = p.id
+		JOIN transactions t ON td.transaction_id = t.id
+		WHERE DATE(t.created_at) >= $1 AND DATE(t.created_at) <= $2
+		GROUP BY p.id, p.name
+		ORDER BY total_qty DESC
+		LIMIT 1
+	`, startDate, endDate).Scan(&produkNama, &produkQty)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, err
+	}
+
+	return &models.ReportResponse{
+		TotalRevenue:   totalRevenue,
+		TotalTransaksi: totalTransaksi,
+		ProdukTerlaris: models.ProdukTerlaris{
+			Nama:    produkNama,
+			QtySold: produkQty,
+		},
 	}, nil
 }

@@ -7,3 +7,4 @@ type Product struct {
 	Stock int    `json:"stock"`
 	CategoryID *int   `json:"category_id,omitempty"`
 }
+

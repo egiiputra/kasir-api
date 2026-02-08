@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"YOUR_PROJECT/services"
+	"kasir-api/services"
+	"kasir-api/models"
 )
 
 type TransactionHandler struct {
@@ -33,7 +34,7 @@ func (h *TransactionHandler) Checkout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	transaction, err := h.service.Checkout(req.Items)
+	transaction, err := h.service.Checkout(req.Items, true)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
